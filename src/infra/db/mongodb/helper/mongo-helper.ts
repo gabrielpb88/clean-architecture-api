@@ -16,4 +16,9 @@ export abstract class MongoHelper {
   static getCollection (name: string): Collection {
     return this.client.db().collection(name)
   }
+
+  static map (document: any): any {
+    const { _id, ...documentWithoutId } = document
+    return Object.assign({}, documentWithoutId, { id: _id })
+  }
 }
