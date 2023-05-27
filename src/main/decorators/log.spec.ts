@@ -1,9 +1,12 @@
 import { LogControllerDecorator } from './log'
 import { Controller, HttpRequest, HttpResponse } from '../../presentation/protocols'
+import { serverError } from '../../presentation/helpers/http-helpers'
+import { LogErrorRepository } from 'data/usecases/protocols/log-error-repository'
 
 interface SutTypes {
   sut: LogControllerDecorator
   controllerStub: Controller
+  logErrorRepositoryStub: LogErrorRepository
 }
 
 const makeController = (): Controller => {
@@ -19,10 +22,20 @@ const makeController = (): Controller => {
   return new ControllerStub()
 }
 
+const makeLogErrorRepository = (): LogErrorRepository => {
+  class LogErrorRepositoryStub implements LogErrorRepository {
+    async log (stack: string): Promise<void> {
+      return new Promise(resolve => resolve())
+    }
+  }
+  return new LogErrorRepositoryStub()
+}
+
 const makeSut = (): SutTypes => {
   const controllerStub = makeController()
-  const sut = new LogControllerDecorator(controllerStub)
-  return { sut, controllerStub }
+  const logErrorRepositoryStub = makeLogErrorRepository()
+  const sut = new LogControllerDecorator(controllerStub, logErrorRepositoryStub)
+  return { sut, controllerStub, logErrorRepositoryStub }
 }
 
 describe('LogController Decorator', () => {
@@ -58,5 +71,24 @@ describe('LogController Decorator', () => {
       statusCode: 200,
       body: {}
     })
+  })
+
+  test('Should call LogErrorRepository with correct error when server returns an error', async () => {
+    const { sut, controllerStub, logErrorRepositoryStub } = makeSut()
+    const error = new Error()
+    error.stack = 'any_stack'
+    jest.spyOn(controllerStub, 'handle').mockResolvedValue(serverError(error))
+    const logSpy = jest.spyOn(logErrorRepositoryStub, 'log')
+    const httpRequest: HttpRequest = {
+      body: {
+        email: 'email@email.com',
+        name: 'Name',
+        password: 'any_password',
+        passwordConfirmation: 'any_password'
+      }
+    }
+
+    await sut.handle(httpRequest)
+    expect(logSpy).toHaveBeenCalledWith(error.stack)
   })
 })
