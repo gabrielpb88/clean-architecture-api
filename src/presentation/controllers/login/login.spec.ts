@@ -1,4 +1,4 @@
-import { badRequest, serverError } from '../../helpers/http-helpers'
+import { badRequest, serverError, unauthorized } from '../../helpers/http-helpers'
 import { InvalidParamError, MissingParamError } from '../../errors'
 import { LoginController } from './login'
 import { HttpRequest } from '../../protocols'
@@ -108,5 +108,12 @@ describe('Login UseCase', () => {
     })
     const httpResponse = await sut.handle(makeHttpRequest())
     expect(httpResponse).toEqual(serverError(new Error()))
+  })
+
+  test('Should return 401 when Authentication fails', async () => {
+    const { sut, authenticatorStub } = makeSut()
+    jest.spyOn(authenticatorStub, 'auth').mockReturnValue(null)
+    const httpResponse = await sut.handle(makeHttpRequest())
+    expect(httpResponse).toEqual(unauthorized())
   })
 })
