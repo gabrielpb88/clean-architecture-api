@@ -100,4 +100,13 @@ describe('Login UseCase', () => {
     await sut.handle(httpRequest)
     expect(authSpy).toHaveBeenCalledWith(httpRequest.body.email, httpRequest.body.password)
   })
+
+  test('Should return 500 when EmailValidator throws', async () => {
+    const { sut, authenticatorStub } = makeSut()
+    jest.spyOn(authenticatorStub, 'auth').mockImplementation(() => {
+      throw new Error()
+    })
+    const httpResponse = await sut.handle(makeHttpRequest())
+    expect(httpResponse).toEqual(serverError(new Error()))
+  })
 })
