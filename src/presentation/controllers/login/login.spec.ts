@@ -1,8 +1,8 @@
 import { ok, serverError, unauthorized } from '../../helpers/http/http-helpers'
 import { LoginController } from './login'
 import { HttpRequest } from '../../protocols'
-import { Authenticator } from '../../../domain/usecases/authenticator'
-import { ValidationComposite } from '../../helpers/validators/validation-composite'
+import { AuthenticationModel, Authenticator } from '../../../domain/usecases/authenticator'
+import { ValidationComposite } from '../../helpers/validators'
 
 interface SutTypes {
   sut: LoginController
@@ -21,7 +21,7 @@ const makeSut = (): SutTypes => {
 
 const makeAuthenticatorStub = (): Authenticator => {
   class AuthenticatorStub implements Authenticator {
-    async auth (email: string, password: string): Promise<string> {
+    async auth (authModel: AuthenticationModel): Promise<string> {
       return Promise.resolve('any_token')
     }
   }
@@ -41,7 +41,11 @@ describe('Login UseCase', () => {
     const authSpy = jest.spyOn(authenticatorStub, 'auth')
     const httpRequest = makeHttpRequest()
     await sut.handle(httpRequest)
-    expect(authSpy).toHaveBeenCalledWith(httpRequest.body.email, httpRequest.body.password)
+    const authModel: AuthenticationModel = {
+      email: httpRequest.body.email,
+      password: httpRequest.body.password
+    }
+    expect(authSpy).toHaveBeenCalledWith(authModel)
   })
 
   test('Should return 500 when EmailValidator throws', async () => {
