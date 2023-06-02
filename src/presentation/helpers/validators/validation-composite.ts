@@ -1,4 +1,4 @@
-import { Validation } from './validation'
+import { Validation } from '../../protocols/validation'
 
 // Composite DesignPattern
 export class ValidationComposite implements Validation {
