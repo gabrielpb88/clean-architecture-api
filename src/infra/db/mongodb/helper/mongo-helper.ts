@@ -4,8 +4,6 @@ export abstract class MongoHelper {
   private static client: MongoClient
   private static url: string
 
-  private constructor () {}
-
   static async connect (url: string): Promise<void> {
     this.url = url
     this.client = await MongoClient.connect(url)
